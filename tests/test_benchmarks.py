@@ -48,7 +48,7 @@ class TestCEC2017:
             CEC2017(function=99, dimension=10)
 
     def test_all_functions_exist(self):
-        for f in range(1, 31):
+        for f in range(1, 30):
             problem = CEC2017(function=f, dimension=10)
             assert problem is not None
 

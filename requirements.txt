@@ -1,7 +1,17 @@
+# Core dependencies
 numpy>=1.24.0
 scipy>=1.10.0
 opfunu>=1.0.0
+
+# Visualization
 matplotlib>=3.7.0
 seaborn>=0.12.0
-pandas>=2.0.0
+
+# Configuration (optional — falls back to config.py if missing)
+pyyaml>=6.0
+
+# Resource monitoring (optional — degrades gracefully)
+psutil>=5.9.0
+
+# Testing
 pytest>=7.0.0

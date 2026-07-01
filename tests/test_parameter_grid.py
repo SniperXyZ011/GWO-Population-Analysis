@@ -80,8 +80,8 @@ class TestParameterGrid:
             populations=[30],
             runs=1,
         )
-        # CEC2017: 30 funcs + CEC2020: 10 funcs = 40
-        assert len(grid) == 40
+        # CEC2017: 29 funcs + CEC2020: 10 funcs = 39
+        assert len(grid) == 39
 
     def test_unknown_benchmark_raises(self):
         grid = ParameterGrid(

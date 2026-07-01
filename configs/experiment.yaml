@@ -1,0 +1,41 @@
+# experiment.yaml — Declarative experiment configuration
+# This file overrides Python defaults in configs/config.py.
+# Missing fields fall back to Python defaults.
+
+experiment:
+  name: "population_analysis_cec2020"
+  description: "Population size analysis on CEC2020 benchmark suite"
+
+benchmarks:
+  - CEC2020
+
+optimizers:
+  - GWO
+  - BBGWO
+  - REGWO
+  - MENGWO
+  - MGWO
+  - RWGWO
+  - OBGWO
+  - modGWO
+  - EBGWO
+  - IGWO_MS
+  - AGWO
+
+dimensions: [10, 30, 50, 100]
+
+population_sizes: [10, 20, 30, 50, 75, 100, 150, 200]
+
+runs: 30
+max_fe_multiplier: 10000
+
+execution:
+  workers: 0                  # 0 = auto-detect (50% of CPUs)
+  retry_failed: 3             # retry count for failed experiments
+
+output:
+  results_dir: "./results"
+  logs_dir: "./logs"
+  checkpoint_db: "./checkpoint.db"
+  save_convergence: true
+  overwrite: false

@@ -26,10 +26,15 @@ class ExperimentRunner:
         4. Save results
     """
 
-    def __init__(self, results_dir=None):
+    def __init__(self, results_dir=None, overwrite=None):
 
         self.result_manager = ResultManager(
             results_dir or RESULTS_DIR
+        )
+
+        self.overwrite = (
+            overwrite if overwrite is not None
+            else OVERWRITE_EXISTING
         )
 
     # ---------------------------------------------------------
@@ -52,7 +57,7 @@ class ExperimentRunner:
 
         # Skip if already completed
         if (
-            not OVERWRITE_EXISTING
+            not self.overwrite
             and self.result_manager.result_exists(experiment)
         ):
             logger.info(

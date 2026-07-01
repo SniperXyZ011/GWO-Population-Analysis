@@ -1,0 +1,43 @@
+2026-06-30 14:14:26,094 | INFO     | GwoPopulationAnalysis | Registered Optimizers: ['AGWO', 'BBGWO', 'EBGWO', 'GWO', 'IGWO_MS', 'MENGWO', 'MGWO', 'OBGWO', 'REGWO', 'RWGWO', 'modGWO']
+2026-06-30 14:14:26,094 | INFO     | GwoPopulationAnalysis | Registered Benchmarks: ['CEC2017', 'CEC2020', 'CEC2022']
+2026-06-30 14:14:26,094 | INFO     | GwoPopulationAnalysis | Total experiments: 50
+2026-06-30 14:14:26,094 | INFO     | GwoPopulationAnalysis | Grid: ParameterGrid(benchmarks=1, optimizers=1, dimensions=1, populations=1, runs=5, total=50)
+2026-06-30 14:28:12,579 | INFO     | GwoPopulationAnalysis | ============================================================
+2026-06-30 14:28:12,579 | INFO     | GwoPopulationAnalysis | EXPERIMENT COMPLETE
+2026-06-30 14:28:12,583 | INFO     | GwoPopulationAnalysis |   Total:     50
+2026-06-30 14:28:12,584 | INFO     | GwoPopulationAnalysis |   Completed: 50
+2026-06-30 14:28:12,584 | INFO     | GwoPopulationAnalysis |   Skipped:   0
+2026-06-30 14:28:12,585 | INFO     | GwoPopulationAnalysis |   Failed:    0
+2026-06-30 14:28:12,585 | INFO     | GwoPopulationAnalysis |   Time:      0.23 hours
+2026-06-30 14:28:12,585 | INFO     | GwoPopulationAnalysis | ============================================================
+2026-07-01 21:48:39,583 | INFO     | GwoPopulationAnalysis | Registered Optimizers: ['AGWO', 'BBGWO', 'EBGWO', 'GWO', 'IGWO_MS', 'MENGWO', 'MGWO', 'OBGWO', 'REGWO', 'RWGWO', 'modGWO']
+2026-07-01 21:48:39,584 | INFO     | GwoPopulationAnalysis | Registered Benchmarks: ['CEC2017', 'CEC2020', 'CEC2022']
+2026-07-01 21:48:39,584 | INFO     | GwoPopulationAnalysis | Configuration: ExperimentConfig(name='default_campaign', benchmarks=1, optimizers=1, dims=[10], pops=1, runs=10, workers=2)
+2026-07-01 21:48:39,584 | INFO     | GwoPopulationAnalysis | Config details: {
+  "name": "default_campaign",
+  "benchmarks": [
+    "CEC2022"
+  ],
+  "optimizers": [
+    "GWO"
+  ],
+  "dimensions": [
+    10
+  ],
+  "population_sizes": [
+    10
+  ],
+  "runs": 10,
+  "max_fe_multiplier": 10000,
+  "workers": 2,
+  "max_retries": 0,
+  "results_dir": "D:\\Intern_2026\\GwoPopulationAnalysis\\results",
+  "logs_dir": "D:\\Intern_2026\\GwoPopulationAnalysis\\logs",
+  "checkpoint_db": "D:\\Intern_2026\\GwoPopulationAnalysis\\checkpoint.db",
+  "save_convergence": true,
+  "overwrite": false
+}
+2026-07-01 21:48:39,662 | INFO     | GwoPopulationAnalysis | Environment: Max | 3.11.4 | git=55be010
+2026-07-01 21:48:39,662 | INFO     | GwoPopulationAnalysis | Total experiments in grid: 120
+2026-07-01 21:48:39,681 | INFO     | GwoPopulationAnalysis | Checkpoint DB: D:\Intern_2026\GwoPopulationAnalysis\checkpoint.db
+2026-07-01 21:48:39,686 | INFO     | GwoPopulationAnalysis | Previously completed: 0
