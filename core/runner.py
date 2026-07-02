@@ -90,7 +90,8 @@ class ExperimentRunner:
             f"DONE: {experiment} | "
             f"Score={result['best_score']:.6e} | "
             f"FE={result['function_evaluations']} | "
-            f"Time={result['execution_time']:.2f}s"
+            f"Time={result['execution_time']:.2f}s | "
+            f"FE/s={result.get('fe_per_second', 0):.0f}"
         )
 
         return result

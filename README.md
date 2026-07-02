@@ -8,7 +8,7 @@ A research-grade, modular, scalable, and extensible optimization framework for c
 |---|-----------|-----------|-------------|
 | 1 | Original GWO | `GWO` | Standard Grey Wolf Optimizer |
 | 2 | BBGWO | `BBGWO` | Bare Bones GWO |
-| 3 | REGWO | `REGWO` | Refraction-Enhanced GWO |
+| 3 | IAGWO | `IAGWO` |  Improved Adaptive Grey Wolf Optimizer|
 | 4 | MENGWO | `MENGWO` | Mutation + Evolution + NPSR GWO |
 | 5 | MGWO | `MGWO` | Modified GWO (Lévy flight) |
 | 6 | RWGWO | `RWGWO` | Random Walk GWO |
@@ -17,6 +17,7 @@ A research-grade, modular, scalable, and extensible optimization framework for c
 | 9 | EBGWO | `EBGWO` | Enhanced Bare Bones GWO |
 | 10 | IGWO-MS | `IGWO_MS` | Improved GWO Multi-Strategy |
 | 11 | AGWO | `AGWO` | Adaptive GWO |
+| 12 | IGWO_DHL | `IGWO_DHL`| Improved Grey Wolf Optimizer Dalsey, Hillblom, and Lynn| 
 
 ## Benchmarks
 

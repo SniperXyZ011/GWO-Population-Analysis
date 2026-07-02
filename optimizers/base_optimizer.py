@@ -258,9 +258,26 @@ class BaseOptimizer(ABC):
         return np.clip(population, self.lb, self.ub)
 
     def record_progress(self):
-        """Record the current best score."""
+        """
+        Record the current best score.
 
-        self.convergence_curve.append(self.best_score)
+        Subsamples to ~1000 points for large runs to
+        prevent excessive memory and storage usage.
+        """
+
+        # Estimate total iterations: max_fe / population_size
+        estimated_iters = max(
+            1, self.max_fe // max(1, self.population_size)
+        )
+
+        # Record every N-th iteration, targeting ~1000 data points
+        record_interval = max(1, estimated_iters // 1000)
+
+        if (
+            self.iteration % record_interval == 0
+            or self.fe_count >= self.max_fe
+        ):
+            self.convergence_curve.append(self.best_score)
 
     def reset(self):
         """Reset all tracking variables for a fresh run."""
@@ -305,6 +322,10 @@ class BaseOptimizer(ABC):
         dict
         """
 
+        fe_per_sec = (
+            self.fe_count / max(self.execution_time, 1e-9)
+        )
+
         return {
 
             "optimizer": self.__class__.__name__,
@@ -322,6 +343,8 @@ class BaseOptimizer(ABC):
             "iterations": self.iteration,
 
             "execution_time": self.execution_time,
+
+            "fe_per_second": fe_per_sec,
 
             "convergence_curve": [
                 float(v) for v in self.convergence_curve

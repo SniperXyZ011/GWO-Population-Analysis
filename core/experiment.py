@@ -49,6 +49,16 @@ class Experiment:
     # ----------------------------
 
     @property
+    def experiment_id(self) -> str:
+        """Compact unique ID for DB primary keys."""
+
+        return (
+            f"{self.benchmark}:F{self.function}:"
+            f"{self.optimizer}:D{self.dimension}:"
+            f"P{self.population_size}:R{self.run}"
+        )
+
+    @property
     def experiment_name(self) -> str:
 
         return (
