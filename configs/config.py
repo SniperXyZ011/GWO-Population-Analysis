@@ -22,6 +22,7 @@ CONFIG_DIR = ROOT_DIR / "configs"
 # ==============================
 
 BENCHMARKS = [
+    "CEC2013",
     "CEC2017",
     "CEC2020",
     "CEC2022",
@@ -31,6 +32,7 @@ BENCHMARKS = [
 # Adding a new benchmark only requires a new entry here
 # and a corresponding wrapper — no other code changes.
 BENCHMARK_FUNCTIONS = {
+    "CEC2013": 28,   # F1 – F28
     "CEC2017": 29,   # F1 – F29
     "CEC2020": 10,   # F1 – F10
     "CEC2022": 12,   # F1 – F12
@@ -46,16 +48,11 @@ DIMENSIONS = [
     30,
     50,
     100,
-    200,
-    500,
-    1000,
 ]
 
 POPULATION_SIZES = [
-    3,
     5,
     10,
-    20,
     30,
     50,
     75,
@@ -81,7 +78,7 @@ MAX_FE_MULTIPLIER = 10000
 OPTIMIZERS = [
     "GWO",
     "BBGWO",
-    "REGWO",
+    "IAGWO",
     "MENGWO",
     "MGWO",
     "RWGWO",
@@ -90,6 +87,7 @@ OPTIMIZERS = [
     "EBGWO",
     "IGWO_MS",
     "AGWO",
+    "IGWO_DLH"
 ]
 
 

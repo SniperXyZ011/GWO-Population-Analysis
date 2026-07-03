@@ -19,7 +19,6 @@ from tests.conftest import MockProblem
 # Import all optimizers to register them
 from optimizers.gwo import GWO
 from optimizers.bbgwo import BBGWO
-from optimizers.regwo import REGWO
 from optimizers.mengwo import MENGWO
 from optimizers.mgwo import MGWO
 from optimizers.rwgwo import RWGWO
@@ -28,11 +27,12 @@ from optimizers.modgwo import modGWO
 from optimizers.ebgwo import EBGWO
 from optimizers.igwo_ms import IGWO_MS
 from optimizers.agwo import AGWO
-
+from optimizers.iagwo import IAGWO
+from optimizers.igwo_dlh import IGWO_DLH
 
 ALL_OPTIMIZERS = [
-    GWO, BBGWO, REGWO, MENGWO, MGWO,
-    RWGWO, OBGWO, modGWO, EBGWO, IGWO_MS, AGWO,
+    GWO, BBGWO, MENGWO, MGWO,
+    RWGWO, OBGWO, modGWO, EBGWO, IGWO_MS, AGWO, IAGWO, IGWO_DLH
 ]
 
 

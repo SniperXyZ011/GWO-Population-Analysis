@@ -11,7 +11,7 @@ No other framework component needs modification.
 
 from optimizers.gwo import GWO           # noqa: F401
 from optimizers.bbgwo import BBGWO       # noqa: F401
-from optimizers.regwo import REGWO       # noqa: F401
+from optimizers.iagwo import IAGWO       # noqa: F401
 from optimizers.mengwo import MENGWO     # noqa: F401
 from optimizers.mgwo import MGWO        # noqa: F401
 from optimizers.rwgwo import RWGWO       # noqa: F401
@@ -20,3 +20,4 @@ from optimizers.modgwo import modGWO     # noqa: F401
 from optimizers.ebgwo import EBGWO       # noqa: F401
 from optimizers.igwo_ms import IGWO_MS   # noqa: F401
 from optimizers.agwo import AGWO         # noqa: F401
+from optimizers.igwo_dlh import IGWO_DLH # noqa: F401

@@ -75,11 +75,11 @@ class TestConfig:
             assert isinstance(o, str)
 
     def test_expected_dimensions(self):
-        expected = [10, 30, 50, 100, 200, 500, 1000]
+        expected = [10, 30, 50, 100]
         assert DIMENSIONS == expected
 
     def test_expected_population_sizes(self):
-        expected = [3, 5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 1000, 1500, 2000]
+        expected = [5, 10, 30, 50, 75, 100, 150, 200, 300, 500, 1000]
         assert POPULATION_SIZES == expected
 
     def test_runs_is_30(self):

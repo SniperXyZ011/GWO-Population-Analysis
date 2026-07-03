@@ -482,7 +482,9 @@ class CheckpointDB:
                      SUM(execution_time) as total_time,
                      MIN(execution_time) as min_time,
                      MAX(execution_time) as max_time,
-                     AVG(fe_per_second) as avg_fe_per_sec
+                     AVG(fe_per_second) as avg_fe_per_sec,
+                     MIN(timestamp) as start_time,
+                     MAX(timestamp) as end_time
                    FROM results"""
             ).fetchone()
 
@@ -492,16 +494,25 @@ class CheckpointDB:
             stats["min_time"] = row["min_time"] or 0.0
             stats["max_time"] = row["max_time"] or 0.0
             stats["avg_fe_per_sec"] = row["avg_fe_per_sec"] or 0.0
+            stats["start_time"] = row["start_time"]
+            stats["end_time"] = row["end_time"]
 
             fail_row = conn.execute(
-                "SELECT COUNT(DISTINCT experiment_id) as cnt FROM failures"
+                "SELECT COUNT(DISTINCT experiment_id) as cnt, MIN(timestamp) as f_start, MAX(timestamp) as f_end FROM failures"
             ).fetchone()
             stats["failed"] = fail_row["cnt"]
+            
+            # Reconcile timestamps across results and failures
+            all_starts = [t for t in [stats["start_time"], fail_row["f_start"]] if t]
+            all_ends = [t for t in [stats["end_time"], fail_row["f_end"]] if t]
+            stats["start_time"] = min(all_starts) if all_starts else None
+            stats["end_time"] = max(all_ends) if all_ends else None
 
             # Per-optimizer breakdown
             opt_rows = conn.execute(
                 """SELECT optimizer, COUNT(*) as cnt,
-                          AVG(execution_time) as avg_time
+                          AVG(execution_time) as avg_time,
+                          AVG(fe_per_second) as avg_fe_sec
                    FROM results
                    GROUP BY optimizer
                    ORDER BY optimizer"""
@@ -511,6 +522,7 @@ class CheckpointDB:
                 r["optimizer"]: {
                     "completed": r["cnt"],
                     "avg_time": r["avg_time"],
+                    "avg_fe_sec": r["avg_fe_sec"],
                 }
                 for r in opt_rows
             }

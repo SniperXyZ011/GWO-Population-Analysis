@@ -69,6 +69,11 @@ class BaseOptimizer(ABC):
 
         self.convergence_curve = []
 
+    @property
+    def max_iterations(self):
+        """Approximate maximum number of iterations."""
+        return max(1, self.max_fe // max(1, self.population_size))
+
     # ===================================================
     # Template Method: optimize()
     # ===================================================
