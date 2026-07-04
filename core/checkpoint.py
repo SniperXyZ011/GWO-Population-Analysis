@@ -119,14 +119,6 @@ class CheckpointDB:
                 CREATE INDEX IF NOT EXISTS idx_results_optimizer
                     ON results(optimizer);
 
-                CREATE TABLE IF NOT EXISTS convergence (
-                    result_id    INTEGER NOT NULL,
-                    iteration    INTEGER NOT NULL,
-                    best_fitness REAL    NOT NULL,
-                    PRIMARY KEY (result_id, iteration),
-                    FOREIGN KEY (result_id) REFERENCES results(id)
-                );
-
                 CREATE TABLE IF NOT EXISTS failures (
                     id              INTEGER PRIMARY KEY AUTOINCREMENT,
                     experiment_id   TEXT    NOT NULL,
@@ -326,29 +318,64 @@ class CheckpointDB:
                     ),
                 )
 
-                result_id = cursor.lastrowid
+    def record_results_batch(self, outcomes: List[Dict[str, Any]]):
+        """
+        Atomically record a batch of completed experiments.
+        """
+        from datetime import datetime, timezone
 
-                # Store convergence curve
-                curve = result.get("convergence_curve", [])
-                if curve:
-                    # Subsample to max 1000 points for storage
-                    step = max(1, len(curve) // 1000)
-                    sampled = [
-                        (result_id, i, float(curve[i]))
-                        for i in range(0, len(curve), step)
-                    ]
-                    # Always include the last point
-                    if sampled and sampled[-1][1] != len(curve) - 1:
-                        sampled.append(
-                            (result_id, len(curve) - 1, float(curve[-1]))
-                        )
+        now = datetime.now(timezone.utc).isoformat()
+        results_data = []
 
-                    conn.executemany(
-                        """INSERT INTO convergence
-                           (result_id, iteration, best_fitness)
-                           VALUES (?, ?, ?)""",
-                        sampled,
-                    )
+        for outcome in outcomes:
+            experiment = outcome["experiment"]
+            result = outcome["result"]
+
+            best_position = result.get("best_position")
+            if best_position is not None:
+                best_position = json.dumps(best_position)
+
+            fe = result.get("function_evaluations", 0)
+            exec_time = result.get("execution_time", 0.0)
+            fe_per_sec = fe / max(exec_time, 1e-9)
+
+            results_data.append((
+                experiment.experiment_name,
+                experiment.benchmark,
+                experiment.function,
+                experiment.dimension,
+                experiment.optimizer,
+                experiment.population_size,
+                experiment.max_function_evaluations,
+                experiment.run,
+                experiment.seed,
+                result.get("best_score"),
+                fe,
+                result.get("iterations"),
+                exec_time,
+                fe_per_sec,
+                best_position,
+                now,
+                outcome.get("hostname", ""),
+                outcome.get("git_hash", ""),
+                outcome.get("python_version", "")
+            ))
+
+        with self._write_lock:
+            with self._connection() as conn:
+                conn.executemany(
+                    """INSERT OR REPLACE INTO results (
+                        experiment_id, benchmark, function, dimension,
+                        optimizer, population_size, max_fe, run, seed,
+                        best_score, function_evaluations, iterations,
+                        execution_time, fe_per_second, best_position,
+                        timestamp, hostname, git_hash, python_version
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )""",
+                    results_data
+                )
 
     # =========================================================
     # Failure tracking

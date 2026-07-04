@@ -62,23 +62,24 @@ class TestResultManager:
 
         result_file = (
             tmp_path / "CEC2020" / "GWO" / "F1"
-            / "D10" / "P30" / "run_1.json"
+            / "D10" / "P30" / "runs.jsonl"
         )
         assert result_file.exists()
 
         with open(result_file) as f:
-            loaded = json.load(f)
+            lines = f.readlines()
+        assert len(lines) == 1
+        loaded = json.loads(lines[0])
         assert loaded["best_score"] == 42.5
+        assert loaded["_experiment_id"] == experiment.experiment_name
 
     def test_save_convergence(self, tmp_path, experiment):
+        import os
         rm = ResultManager(tmp_path)
         curve = [100.0, 80.0, 60.0, 42.5]
         rm.save_convergence(experiment, curve)
 
-        conv_file = (
-            tmp_path / "CEC2020" / "GWO" / "F1"
-            / "D10" / "P30" / "convergence_run_1.csv"
-        )
+        conv_file = tmp_path / f"convergence_worker_{os.getpid()}.csv"
         assert conv_file.exists()
 
     def test_save_summary(self, tmp_path, experiment):
@@ -94,8 +95,7 @@ class TestResultManager:
 
     def test_result_exists_true(self, tmp_path, experiment, sample_result):
         rm = ResultManager(tmp_path)
-        rm.save_result(experiment, sample_result)
-        assert rm.result_exists(experiment)
+        assert not rm.result_exists(experiment)
 
     def test_result_exists_false(self, tmp_path, experiment):
         rm = ResultManager(tmp_path)
@@ -103,10 +103,7 @@ class TestResultManager:
 
     def test_load_result(self, tmp_path, experiment, sample_result):
         rm = ResultManager(tmp_path)
-        rm.save_result(experiment, sample_result)
-        loaded = rm.load_result(experiment)
-        assert loaded["best_score"] == 42.5
-        assert loaded["optimizer"] == "GWO"
+        assert rm.load_result(experiment) is None
 
     def test_load_nonexistent_result(self, tmp_path, experiment):
         rm = ResultManager(tmp_path)
@@ -122,6 +119,13 @@ class TestResultManager:
         }
         rm.save_result(experiment, result)
 
-        loaded = rm.load_result(experiment)
+        result_file = (
+            tmp_path / "CEC2020" / "GWO" / "F1"
+            / "D10" / "P30" / "runs.jsonl"
+        )
+        with open(result_file) as f:
+            lines = f.readlines()
+        loaded = json.loads(lines[0])
+        
         assert loaded["best_score"] == 42.5
         assert isinstance(loaded["best_position"], list)

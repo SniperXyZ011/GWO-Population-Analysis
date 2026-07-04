@@ -164,20 +164,34 @@ class TestCheckpointDB:
         assert "per_optimizer" in stats
         assert "GWO" in stats["per_optimizer"]
 
-    def test_convergence_stored(self, db, sample_experiment, sample_result):
-        """Verify convergence data is stored in the DB."""
-        db.record_result(sample_experiment, sample_result)
-
-        import sqlite3
-        conn = sqlite3.connect(str(db.db_path))
-        conn.row_factory = sqlite3.Row
-
-        rows = conn.execute(
-            "SELECT * FROM convergence WHERE result_id = 1"
-        ).fetchall()
-        conn.close()
-
-        assert len(rows) > 0
+    def test_record_results_batch(self, db, sample_experiment, sample_result):
+        """Verify batch recording of results."""
+        outcomes = []
+        for i in range(3):
+            exp = Experiment(
+                benchmark="CEC2020",
+                function=1,
+                dimension=10,
+                optimizer="GWO",
+                population_size=30,
+                max_function_evaluations=100000,
+                run=i+1,
+                seed=i+1,
+            )
+            outcomes.append({
+                "experiment": exp,
+                "result": sample_result,
+                "status": "completed",
+                "hostname": "localhost",
+                "git_hash": "abc1234",
+                "python_version": "3.12",
+            })
+            
+        db.record_results_batch(outcomes)
+        assert db.get_completed_count() == 3
+        
+        results = db.query_results(benchmark="CEC2020")
+        assert len(results) == 3
 
     def test_replace_on_duplicate(self, db, sample_experiment, sample_result):
         """Recording the same experiment twice should replace, not error."""

@@ -46,39 +46,37 @@ class ResultManager:
     # ---------------------------------------------------------
 
     def save_result(self, experiment, result):
-        """Save a single run result as JSON."""
+        """Append a single run result to the JSONL file."""
 
         folder = self.create_experiment_folder(experiment)
-
-        filename = folder / f"run_{experiment.run}.json"
+        filename = folder / "runs.jsonl"
 
         # Convert numpy types for JSON serialization
         serializable = self._make_serializable(result)
+        serializable["_experiment_id"] = experiment.experiment_name
 
-        with open(filename, "w") as f:
-
-            json.dump(serializable, f, indent=4)
+        with open(filename, "a") as f:
+            f.write(json.dumps(serializable) + "\n")
 
     # ---------------------------------------------------------
     # Save Convergence Curve
     # ---------------------------------------------------------
 
     def save_convergence(self, experiment, curve):
-        """Save convergence curve as CSV."""
+        """Append convergence curve to a worker-partitioned CSV file."""
+        import os
 
-        folder = self.create_experiment_folder(experiment)
+        filename = self.root / f"convergence_worker_{os.getpid()}.csv"
+        file_exists = filename.exists()
 
-        filename = folder / f"convergence_run_{experiment.run}.csv"
-
-        with open(filename, "w", newline="") as f:
-
+        with open(filename, "a", newline="") as f:
             writer = csv.writer(f)
-
-            writer.writerow(["Iteration", "Best_Fitness"])
+            
+            if not file_exists:
+                writer.writerow(["experiment_id", "iteration", "best_fitness"])
 
             for i, value in enumerate(curve):
-
-                writer.writerow([i + 1, value])
+                writer.writerow([experiment.experiment_name, i + 1, value])
 
     # ---------------------------------------------------------
     # Save Summary
@@ -102,33 +100,12 @@ class ResultManager:
     # ---------------------------------------------------------
 
     def load_result(self, experiment):
-        """Load a single run result from JSON."""
-
-        folder = self.create_experiment_folder(experiment)
-
-        filename = folder / f"run_{experiment.run}.json"
-
-        if not filename.exists():
-            return None
-
-        with open(filename, "r") as f:
-            return json.load(f)
+        """Deprecated: Load a single run result from JSON."""
+        return None
 
     def result_exists(self, experiment):
-        """Check if a result already exists for this experiment."""
-
-        folder = (
-            self.root
-            / experiment.benchmark
-            / experiment.optimizer
-            / f"F{experiment.function}"
-            / f"D{experiment.dimension}"
-            / f"P{experiment.population_size}"
-        )
-
-        filename = folder / f"run_{experiment.run}.json"
-
-        return filename.exists()
+        """Deprecated: Check if a result already exists. Handled by CheckpointDB."""
+        return False
 
     # ---------------------------------------------------------
     # Serialization Helpers

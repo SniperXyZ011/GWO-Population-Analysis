@@ -17,7 +17,7 @@ Key design decisions:
 import logging
 import time
 import traceback
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, FIRST_COMPLETED, wait
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional
 
@@ -86,6 +86,21 @@ def _run_single_experiment(
             "error": str(e),
             "traceback": traceback.format_exc(),
         }
+
+
+def _worker_init():
+    """Pin the worker to a specific CPU core to optimize NUMA access."""
+    import os
+    try:
+        import psutil
+        p = psutil.Process()
+        cores = p.cpu_affinity()
+        if cores:
+            # Distribute workers across available cores using PID
+            core = cores[os.getpid() % len(cores)]
+            p.cpu_affinity([core])
+    except (AttributeError, ImportError, NotImplementedError):
+        pass
 
 
 class ExperimentScheduler:
@@ -208,14 +223,24 @@ class ExperimentScheduler:
 
         if self.max_workers == 1:
             # Sequential mode — useful for debugging
+            batch_outcomes = []
             for exp in pending:
                 outcome = _run_single_experiment(
                     exp, results_dir_str, self.overwrite
                 )
+                
+                outcome["hostname"] = self._env.hostname
+                outcome["git_hash"] = self._env.git_hash or ""
+                outcome["python_version"] = self._env.python_version
+
                 self._handle_outcome(outcome)
 
                 if outcome["status"] == "completed":
                     completed += 1
+                    batch_outcomes.append(outcome)
+                    if len(batch_outcomes) >= 500:
+                        self.db.record_results_batch(batch_outcomes)
+                        batch_outcomes.clear()
                 elif outcome["status"] == "failed":
                     failed += 1
 
@@ -225,60 +250,105 @@ class ExperimentScheduler:
                         total_all,
                         outcome,
                     )
+                    
+            if batch_outcomes:
+                self.db.record_results_batch(batch_outcomes)
+                batch_outcomes.clear()
         else:
             # Parallel mode
             with ProcessPoolExecutor(
-                max_workers=self.max_workers
+                max_workers=self.max_workers,
+                max_tasks_per_child=1000,
+                initializer=_worker_init
             ) as executor:
 
                 future_to_exp = {}
-
-                for exp in pending:
-                    future = executor.submit(
-                        _run_single_experiment,
-                        exp,
-                        results_dir_str,
-                        self.overwrite,
-                    )
-                    future_to_exp[future] = exp
-
-                for future in as_completed(future_to_exp):
-
+                active_futures = set()
+                pending_iter = iter(pending)
+                batch_outcomes = []
+                
+                # Initial fill
+                for _ in range(self.max_workers * 2):
                     try:
-                        outcome = future.result(timeout=3600)
-                    except Exception as e:
-                        exp = future_to_exp[future]
-                        outcome = {
-                            "experiment": exp,
-                            "result": None,
-                            "status": "failed",
-                            "error": str(e),
-                            "traceback": traceback.format_exc(),
-                        }
-
-                    self._handle_outcome(outcome)
-
-                    if outcome["status"] == "completed":
-                        completed += 1
-                    elif outcome["status"] == "failed":
-                        failed += 1
-
-                    done = completed + skipped + failed
-                    if self.progress_callback:
-                        self.progress_callback(done, total_all, outcome)
-                    elif done % max(1, total_pending // 20) == 0:
-                        elapsed = time.time() - start_time
-                        rate = done / max(elapsed, 1e-9)
-                        eta = (total_pending - (completed + failed)) / max(rate, 1e-9)
-
-                        logger.info(
-                            f"Progress: {done}/{total_all} "
-                            f"({done / total_all * 100:.1f}%) | "
-                            f"Completed={completed + skipped} "
-                            f"Failed={failed} | "
-                            f"Rate={rate:.1f}/s | "
-                            f"ETA={eta / 3600:.1f}h"
+                        exp = next(pending_iter)
+                        future = executor.submit(
+                            _run_single_experiment,
+                            exp,
+                            results_dir_str,
+                            self.overwrite,
                         )
+                        future_to_exp[future] = exp
+                        active_futures.add(future)
+                    except StopIteration:
+                        break
+
+                while active_futures:
+                    done, active_futures = wait(active_futures, return_when=FIRST_COMPLETED)
+                    
+                    for future in done:
+                        try:
+                            outcome = future.result(timeout=3600)
+                        except Exception as e:
+                            exp = future_to_exp[future]
+                            outcome = {
+                                "experiment": exp,
+                                "result": None,
+                                "status": "failed",
+                                "error": str(e),
+                                "traceback": traceback.format_exc(),
+                            }
+
+                        outcome["hostname"] = self._env.hostname
+                        outcome["git_hash"] = self._env.git_hash or ""
+                        outcome["python_version"] = self._env.python_version
+
+                        self._handle_outcome(outcome)
+
+                        if outcome["status"] == "completed":
+                            completed += 1
+                            batch_outcomes.append(outcome)
+                            if len(batch_outcomes) >= 500:
+                                self.db.record_results_batch(batch_outcomes)
+                                batch_outcomes.clear()
+                        elif outcome["status"] == "failed":
+                            failed += 1
+
+                        done_count = completed + skipped + failed
+                        if self.progress_callback:
+                            self.progress_callback(done_count, total_all, outcome)
+                        elif done_count % max(1, total_pending // 20) == 0:
+                            elapsed = time.time() - start_time
+                            rate = done_count / max(elapsed, 1e-9)
+                            eta = (total_pending - (completed + failed)) / max(rate, 1e-9)
+
+                            logger.info(
+                                f"Progress: {done_count}/{total_all} "
+                                f"({done_count / total_all * 100:.1f}%) | "
+                                f"Completed={completed + skipped} "
+                                f"Failed={failed} | "
+                                f"Rate={rate:.1f}/s | "
+                                f"ETA={eta / 3600:.1f}h"
+                            )
+                        
+                        del future_to_exp[future]
+
+                        # Replenish queue
+                        try:
+                            exp = next(pending_iter)
+                            new_future = executor.submit(
+                                _run_single_experiment,
+                                exp,
+                                results_dir_str,
+                                self.overwrite,
+                            )
+                            future_to_exp[new_future] = exp
+                            active_futures.add(new_future)
+                        except StopIteration:
+                            pass
+
+                if batch_outcomes:
+                    self.db.record_results_batch(batch_outcomes)
+                    batch_outcomes.clear()
 
         elapsed = time.time() - start_time
 
@@ -312,22 +382,13 @@ class ExperimentScheduler:
     # =========================================================
 
     def _handle_outcome(self, outcome: dict):
-        """Process a single experiment outcome."""
+        """Process a single experiment outcome (failures only for DB)."""
 
         experiment = outcome["experiment"]
         status = outcome["status"]
 
-        if status == "completed" and outcome["result"] is not None:
-
-            self.db.record_result(
-                experiment=experiment,
-                result=outcome["result"],
-                hostname=self._env.hostname,
-                git_hash=self._env.git_hash or "",
-                python_version=self._env.python_version,
-            )
-
-        elif status == "failed":
+        # Successful results are now batched in run_campaign
+        if status == "failed":
 
             error_msg = outcome.get("error", "Unknown error")
             tb = outcome.get("traceback", "")

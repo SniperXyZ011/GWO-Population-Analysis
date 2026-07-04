@@ -79,7 +79,7 @@ class TestConfig:
         assert DIMENSIONS == expected
 
     def test_expected_population_sizes(self):
-        expected = [5, 10, 30, 50, 75, 100, 150, 200, 300, 500, 1000]
+        expected = [5, 10, 30, 50, 75, 100, 150, 200, 300, 500, 1000, 1500, 2000]
         assert POPULATION_SIZES == expected
 
     def test_runs_is_30(self):

@@ -20,6 +20,14 @@ import argparse
 import json
 import sys
 import time
+import os
+
+# Limit OpenBLAS/NumPy threads to prevent CPU thrashing
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 # --- Register all benchmarks and optimizers ---
 import benchmarks.cec2013  # noqa: F401
@@ -477,4 +485,9 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing as mp
+    try:
+        mp.set_start_method('spawn', force=True)
+    except RuntimeError:
+        pass
     main()

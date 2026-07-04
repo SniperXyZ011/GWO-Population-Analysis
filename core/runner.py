@@ -55,16 +55,6 @@ class ExperimentRunner:
             Result dictionary from the optimizer.
         """
 
-        # Skip if already completed
-        if (
-            not self.overwrite
-            and self.result_manager.result_exists(experiment)
-        ):
-            logger.info(
-                f"SKIP (exists): {experiment}"
-            )
-            return None
-
         logger.info(f"START: {experiment}")
 
         # 1. Create benchmark problem
@@ -78,13 +68,13 @@ class ExperimentRunner:
         # 3. Run optimization (timing handled inside optimize)
         result = optimizer.optimize()
 
+        # Pop the massive convergence curve array to avoid IPC overhead
+        curve = result.pop("convergence_curve", [])
+
         # 4. Save results
         self.result_manager.save_result(experiment, result)
 
-        self.result_manager.save_convergence(
-            experiment,
-            result["convergence_curve"],
-        )
+        self.result_manager.save_convergence(experiment, curve)
 
         logger.info(
             f"DONE: {experiment} | "

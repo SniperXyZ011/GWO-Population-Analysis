@@ -143,12 +143,30 @@ class ResourceMonitor:
 
     @staticmethod
     def _get_cpu_count() -> int:
-        """Get logical CPU count, respecting cgroups."""
+        """Get physical CPU count, avoiding hyper-threading oversubscription."""
 
         try:
-            return len(os.sched_getaffinity(0))
-        except AttributeError:
-            return os.cpu_count() or 1
+            import psutil
+            # Try to get physical cores first
+            physical = psutil.cpu_count(logical=False)
+            if physical:
+                try:
+                    # Respect cgroups (e.g. docker) if restricted
+                    allowed = len(os.sched_getaffinity(0))
+                    return min(physical, allowed)
+                except AttributeError:
+                    return physical
+            
+            # Fallback if physical is None
+            try:
+                return len(os.sched_getaffinity(0))
+            except AttributeError:
+                return os.cpu_count() or 1
+        except ImportError:
+            try:
+                return len(os.sched_getaffinity(0))
+            except AttributeError:
+                return os.cpu_count() or 1
 
     @staticmethod
     def _get_memory() -> tuple:
