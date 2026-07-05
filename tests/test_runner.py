@@ -94,11 +94,18 @@ class TestRunner:
             / "F1"
             / "D5"
             / "P5"
-            / "runs.jsonl"
+            / "run_1.json"
         )
         assert result_file.exists()
 
         # Check convergence file exists
-        import os
-        conv_file = tmp_path / f"convergence_worker_{os.getpid()}.csv"
+        conv_file = (
+            tmp_path
+            / "_MockBenchmarkForRunner"
+            / "_MockOptimizerForRunner"
+            / "F1"
+            / "D5"
+            / "P5"
+            / "convergence_run_1.csv"
+        )
         assert conv_file.exists()
